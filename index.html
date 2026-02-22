@@ -14,46 +14,46 @@
 body{background:#f4f7fb}
 .dashboard{display:flex;min-height:100vh}
 
-/* SIDEBAR */
+/* Sidebar */
 .sidebar{
-  width:230px;
+  width:240px;
   background:#1e3a8a;
   color:white;
-  padding:20px;
+  padding:25px;
 }
 .sidebar h2{margin-bottom:30px}
 .sidebar ul{list-style:none}
 .sidebar ul li{
-  padding:10px;
+  padding:12px;
   margin-bottom:10px;
   cursor:pointer;
-  border-radius:6px;
+  border-radius:8px;
 }
 .sidebar ul li:hover,
 .sidebar ul li.active{
   background:rgba(255,255,255,0.2);
 }
 
-/* MAIN */
+/* Main */
 .main{flex:1;padding:30px}
 .section{display:none;animation:fade 0.3s}
 .section.active{display:block}
 @keyframes fade{from{opacity:0}to{opacity:1}}
 
-/* CARDS */
+/* Cards */
 .cards{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
   gap:20px;
 }
-.card{
+.card-stat{
   background:white;
   padding:20px;
-  border-radius:12px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.05);
+  border-radius:15px;
+  box-shadow:0 4px 15px rgba(0,0,0,0.05);
 }
-.card h3{font-size:14px;color:#777}
-.card p{font-size:24px;font-weight:600;color:#1e3a8a}
+.card-stat h3{font-size:14px;color:#888}
+.card-stat p{font-size:26px;font-weight:600;color:#1e3a8a}
 
 /* QR */
 .container{
@@ -63,14 +63,14 @@ body{background:#f4f7fb}
   margin-top:15px;
 }
 .qr-card{
-  text-align:center;
-  padding:10px;
-  border:1px solid #eee;
-  border-radius:10px;
   background:white;
+  padding:12px;
+  border-radius:12px;
+  box-shadow:0 3px 10px rgba(0,0,0,0.05);
+  text-align:center;
 }
 
-/* TABLE */
+/* Table */
 table{width:100%;border-collapse:collapse;margin-top:15px}
 th,td{padding:10px;border-bottom:1px solid #eee;text-align:center}
 th{background:#1e3a8a;color:white}
@@ -78,14 +78,14 @@ th{background:#1e3a8a;color:white}
 button{
   padding:8px 15px;
   border:none;
-  border-radius:6px;
+  border-radius:8px;
   background:#1e3a8a;
   color:white;
   cursor:pointer;
 }
-button:hover{opacity:0.8}
+button:hover{opacity:0.85}
 
-#reader{max-width:300px;margin:auto;margin-top:15px}
+#reader{max-width:320px;margin:auto;margin-top:20px}
 
 @media(max-width:768px){
   .dashboard{flex-direction:column}
@@ -115,11 +115,11 @@ button:hover{opacity:0.8}
 <!-- DASHBOARD -->
 <div id="dashboard" class="section active">
   <div class="cards">
-    <div class="card">
+    <div class="card-stat">
       <h3>Total Siswa</h3>
       <p>15</p>
     </div>
-    <div class="card">
+    <div class="card-stat">
       <h3>Hadir Hari Ini</h3>
       <p id="hadirHariIni">0</p>
     </div>
@@ -161,19 +161,19 @@ button:hover{opacity:0.8}
 
 <script>
 
-/* ================= CONFIG ================= */
+/* ================= GANTI DENGAN URL APPS SCRIPT ================= */
 const scriptURL = "https://script.google.com/macros/s/AKfycbxXmSFJCMIHc6YFjtmz3XmUtwY3ZCZa7WeN9nQ50V8RibhfKj1TZid2TMT42sHfXvyVbg/exec";
 
 /* ================= SIDEBAR ================= */
 function showSection(id,el){
-  document.querySelectorAll(".section").forEach(sec=>sec.classList.remove("active"));
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   document.querySelectorAll(".menu").forEach(m=>m.classList.remove("active"));
   el.classList.add("active");
 }
 
 /* ================= DATA SISWA ================= */
-const siswa=[
+const siswa = [
 {id:"S001",nama:"Ahmad Fauzi"},
 {id:"S002",nama:"Muhammad Rizki"},
 {id:"S003",nama:"Abdul Rahman"},
@@ -192,7 +192,7 @@ const siswa=[
 ];
 
 /* ================= GENERATE QR ================= */
-const container=document.getElementById("qr-container");
+const container = document.getElementById("qr-container");
 siswa.forEach(data=>{
   const card=document.createElement("div");
   card.className="qr-card";
@@ -217,12 +217,13 @@ function onScanSuccess(decodedText){
   fetch(scriptURL,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({id:id,nama:nama,tanggal:tanggal})
+    body:JSON.stringify({id,nama,tanggal})
   })
   .then(res=>res.json())
-  .then(res=>{
+  .then(()=>{
     alert("Presensi berhasil untuk "+nama);
-    document.getElementById("hadirHariIni").innerText++;
+    let hadir=document.getElementById("hadirHariIni");
+    hadir.innerText=parseInt(hadir.innerText)+1;
   })
   .catch(err=>{
     console.error(err);
@@ -245,9 +246,8 @@ function loadData(){
       const nama=row[2];
       const tanggal=row[3];
 
-      if(tanggal.startsWith(bulan)){
-        if(!rekap[id]) rek
-ap[id]={nama:nama,jumlah:0};
+      if(tanggal && tanggal.startsWith(bulan)){
+        if(!rekap[id]) rekap[id]={nama,jumlah:0};
         rekap[id].jumlah++;
       }
     });
@@ -256,11 +256,11 @@ ap[id]={nama:nama,jumlah:0};
     tbody.innerHTML="";
     for(let id in rekap){
       tbody.innerHTML+=`
-      <tr>
-        <td>${id}</td>
-        <td>${rekap[id].nama}</td>
-        <td>${rekap[id].jumlah}</td>
-      </tr>`;
+        <tr>
+          <td>${id}</td>
+          <td>${rekap[id].nama}</td>
+          <td>${rekap[id].jumlah}</td>
+        </tr>`;
     }
   });
 }
