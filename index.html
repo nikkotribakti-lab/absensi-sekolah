@@ -225,7 +225,8 @@ function onScanSuccess(decodedText) {
   .then(() => alert("Presensi berhasil untuk "+nama));
 }
 
-new Html5QrcodeScanner("reader",{fps:10,qrbox:250}).render(onScanSuccess);
+new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 })
+  .render(onScanSuccess);
 
 /* ================= REKAP ================= */
 function loadData(){
@@ -263,4 +264,5 @@ function loadData(){
 
 </body>
 </html>
+
 
