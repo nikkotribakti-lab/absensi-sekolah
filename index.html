@@ -208,27 +208,21 @@ siswa.forEach(data=>{
 });
 
 /* ================= SCAN ================= */
-function onScanSuccess(decodedText){
-  const data=decodedText.split("|");
-  const id=data[0];
-  const nama=data[1];
-  const tanggal=new Date().toISOString().split("T")[0];
+function onScanSuccess(decodedText) {
+  const data = decodedText.split("|");
+  const id = data[0];
+  const nama = data[1];
 
-  fetch(scriptURL,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({id,nama,tanggal})
+  fetch(scriptURL, {
+    method: "POST",
+    body: JSON.stringify({
+      id: id,
+      nama: nama,
+      tanggal: new Date().toISOString().split("T")[0]
+    })
   })
-  .then(res=>res.json())
-  .then(()=>{
-    alert("Presensi berhasil untuk "+nama);
-    let hadir=document.getElementById("hadirHariIni");
-    hadir.innerText=parseInt(hadir.innerText)+1;
-  })
-  .catch(err=>{
-    console.error(err);
-    alert("Gagal mengirim data");
-  });
+  .then(res => res.json())
+  .then(() => alert("Presensi berhasil untuk "+nama));
 }
 
 new Html5QrcodeScanner("reader",{fps:10,qrbox:250}).render(onScanSuccess);
@@ -269,3 +263,4 @@ function loadData(){
 
 </body>
 </html>
+
