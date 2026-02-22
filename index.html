@@ -9,48 +9,146 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
-body{font-family:Arial;margin:20px;text-align:center}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Segoe UI',sans-serif;
+  background:linear-gradient(135deg,#1e3c72,#2a5298);
+  color:#333;
+  padding:20px;
+}
+
+.wrapper{
+  max-width:1100px;
+  margin:auto;
+}
+
+.header{
+  text-align:center;
+  color:white;
+  margin-bottom:30px;
+}
+
+.section{
+  background:white;
+  padding:25px;
+  border-radius:15px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.15);
+  margin-bottom:30px;
+}
+
+h2{
+  font-weight:600;
+  margin-bottom:10px;
+}
+
+h3{
+  margin-bottom:15px;
+  color:#2a5298;
+}
+
 .container{
   display:grid;
   grid-template-columns: repeat(auto-fill,minmax(150px,1fr));
   gap:20px;
+}
+
+.card{
+  background:#f9f9f9;
+  border-radius:12px;
+  padding:15px;
+  text-align:center;
+  box-shadow:0 5px 15px rgba(0,0,0,0.08);
+  transition:0.3s;
+}
+
+.card:hover{
+  transform:translateY(-5px);
+}
+
+button{
+  background:#2a5298;
+  color:white;
+  border:none;
+  padding:10px 18px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:0.3s;
+  font-weight:500;
+}
+
+button:hover{
+  background:#1e3c72;
+}
+
+#reader{
+  width:300px;
+  margin:auto;
+}
+
+input[type="month"]{
+  padding:8px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  margin-right:10px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
   margin-top:20px;
 }
-.card{
-  border:1px solid #ddd;
+
+th{
+  background:#2a5298;
+  color:white;
   padding:10px;
-  border-radius:10px;
 }
-#reader{width:300px;margin:auto;margin-top:20px}
-table{width:100%;margin-top:20px;border-collapse:collapse}
-th,td{border:1px solid #ddd;padding:8px}
-button{padding:8px;margin:5px}
-@media print {
-  #reader, #rekapSection, #scanSection button {display:none;}
+
+td{
+  padding:10px;
+  border-bottom:1px solid #eee;
+  text-align:center;
+}
+
+tr:hover{
+  background:#f2f6ff;
+}
+
+@media(max-width:768px){
+  #reader{width:100%}
+}
+
+@media print{
+  body{background:white}
+  .section:not(:first-child){display:none}
+  button{display:none}
 }
 </style>
 </head>
 <body>
 
-<h2>SISTEM ABSENSI SEKOLAH</h2>
+<div class="wrapper">
 
-<!-- ================= QR SISWA ================= -->
+<div class="header">
+<h2>SISTEM ABSENSI SEKOLAH</h2>
+<p>Scan QR & Rekap Kehadiran Otomatis</p>
+</div>
+
+<!-- QR SECTION -->
+<div class="section">
 <h3>Barcode Siswa</h3>
 <button onclick="window.print()">Print Barcode</button>
 <div class="container" id="qr-container"></div>
+</div>
 
-<hr>
-
-<!-- ================= SCAN ABSENSI ================= -->
-<div id="scanSection">
+<!-- SCAN SECTION -->
+<div class="section">
 <h3>Scan Absensi</h3>
 <div id="reader"></div>
 </div>
 
-<hr>
-
-<!-- ================= REKAP BULANAN ================= -->
-<div id="rekapSection">
+<!-- REKAP SECTION -->
+<div class="section">
 <h3>Rekap Bulanan</h3>
 <input type="month" id="bulan">
 <button onclick="loadData()">Tampilkan</button>
@@ -67,11 +165,12 @@ button{padding:8px;margin:5px}
 </table>
 </div>
 
+</div>
+
 <script>
 
 const scriptURL = "https://script.google.com/macros/s/AKfycbwDE1kzb5KZE_Rsahb1EcaaklJKGl9YClVtcJyPHtOF9OEvAYWzQtIyaAAGm3t73w8WoQ/exec";
 
-/* ================= DATA SISWA ================= */
 const siswa = [
 {id:"S001", nama:"Ahmad Fauzi"},
 {id:"S002", nama:"Muhammad Rizki"},
@@ -90,76 +189,72 @@ const siswa = [
 {id:"S015", nama:"Ali Akbar"}
 ];
 
-/* ================= GENERATE QR ================= */
 const container = document.getElementById("qr-container");
 
-siswa.forEach(data => {
-  const card = document.createElement("div");
-  card.className = "card";
-
-  const qrDiv = document.createElement("div");
+siswa.forEach(data=>{
+  const card=document.createElement("div");
+  card.className="card";
+  const qrDiv=document.createElement("div");
   card.appendChild(qrDiv);
-
-  new QRCode(qrDiv, {
-    text: data.id + "|" + data.nama,
-    width: 120,
-    height: 120
+  new QRCode(qrDiv,{
+    text:data.id+"|"+data.nama,
+    width:120,
+    height:120
   });
-
-  const nama = document.createElement("div");
-  nama.innerHTML = "<b>"+data.nama+"</b><br>"+data.id;
+  const nama=document.createElement("div");
+  nama.innerHTML="<strong>"+data.nama+"</strong><br>"+data.id;
   card.appendChild(nama);
-
   container.appendChild(card);
 });
 
-/* ================= SCAN FUNCTION ================= */
-function onScanSuccess(decodedText) {
-  const data = decodedText.split("|");
-  const id = data[0];
-  const nama = data[1];
+function onScanSuccess(decodedText){
+  const data=decodedText.split("|");
+  if(data.length<2){alert("QR tidak valid");return;}
+  const id=data[0];
+  const nama=data[1];
 
-  fetch(scriptURL, {
-    method: "POST",
-    body: JSON.stringify({
-      id: id,
-      nama: nama,
-      tanggal: new Date().toISOString().split("T")[0]
+  fetch(scriptURL,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      id:id,
+      nama:nama,
+      tanggal:new Date().toISOString().split("T")[0]
     })
   })
-  .then(res => res.json())
-  .then(() => alert("Presensi berhasil untuk "+nama));
+  .then(res=>res.json())
+  .then(response=>{
+    if(response.status==="sudah_absen"){
+      alert("Siswa sudah absen hari ini");
+    }else{
+      alert("Presensi berhasil untuk "+nama);
+    }
+  })
+  .catch(()=>alert("Gagal kirim data"));
 }
 
-new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 })
-  .render(onScanSuccess);
+new Html5QrcodeScanner("reader",{fps:10,qrbox:250})
+.render(onScanSuccess);
 
-/* ================= REKAP BULANAN ================= */
 function loadData(){
   fetch(scriptURL)
   .then(res=>res.json())
   .then(data=>{
-    const bulan = document.getElementById("bulan").value;
-    const rekap = {};
-
+    const bulan=document.getElementById("bulan").value;
+    const rekap={};
     data.forEach(row=>{
-      const id = row[1];
-      const nama = row[2];
-      const tanggal = row[3];
-
+      const id=row[1];
+      const nama=row[2];
+      const tanggal=row[3];
       if(tanggal.startsWith(bulan)){
-        if(!rekap[id]){
-          rekap[id] = {nama:nama, jumlah:0};
-        }
+        if(!rekap[id]){rekap[id]={nama:nama,jumlah:0};}
         rekap[id].jumlah++;
       }
     });
-
-    const tbody = document.getElementById("rekap");
-    tbody.innerHTML = "";
-
+    const tbody=document.getElementById("rekap");
+    tbody.innerHTML="";
     for(let id in rekap){
-      tbody.innerHTML += `
+      tbody.innerHTML+=`
         <tr>
           <td>${id}</td>
           <td>${rekap[id].nama}</td>
