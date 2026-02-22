@@ -137,16 +137,15 @@ Dashboard Absensi Sekolah
 
 <canvas id="chart" height="100"></canvas>
 
-<table>
 <thead>
 <tr>
 <th>ID</th>
 <th>Nama</th>
-<th>Jumlah Hadir</th>
+<th>Jam</th>
+<th>Status</th>
 </tr>
 </thead>
 <tbody id="rekap"></tbody>
-</table>
 </div>
 
 </div>
@@ -179,13 +178,21 @@ function onScanSuccess(decodedText){
   const data=decodedText.split("|");
   if(data.length<2){return;}
 
+  const now = new Date();
+  const jam = now.toTimeString().split(" ")[0];
+  const batas = "16:00:00";
+
+  let status = (jam > batas) ? "Terlambat" : "Hadir";
+
   fetch(scriptURL,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
       id:data[0],
       nama:data[1],
-      tanggal:new Date().toISOString().split("T")[0]
+      tanggal:now.toISOString().split("T")[0],
+      jam:jam,
+      status:status
     })
   })
   .then(res=>res.json())
@@ -193,7 +200,8 @@ function onScanSuccess(decodedText){
     if(response.status==="sudah_absen"){
       document.getElementById("status").innerText="Siswa sudah absen hari ini";
     }else{
-      document.getElementById("status").innerText="Berhasil: "+data[1];
+      document.getElementById("status").innerText=
+        data[1]+" | "+jam+" | "+status;
     }
     loadData();
   });
