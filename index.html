@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Sistem Absensi Sekolah</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+body{font-family:Arial;margin:20px;text-align:center}
+.container{
+  display:grid;
+  grid-template-columns: repeat(auto-fill,minmax(150px,1fr));
+  gap:20px;
+  margin-top:20px;
+}
+.card{
+  border:1px solid #ddd;
+  padding:10px;
+  border-radius:10px;
+}
+#reader{width:300px;margin:auto;margin-top:20px}
+table{width:100%;margin-top:20px;border-collapse:collapse}
+th,td{border:1px solid #ddd;padding:8px}
+button{padding:8px;margin:5px}
+@media print {
+  #reader, #rekapSection, #scanSection button {display:none;}
+}
+</style>
+</head>
+<body>
+
+<h2>SISTEM ABSENSI SEKOLAH</h2>
+
+<!-- ================= QR SISWA ================= -->
+<h3>Barcode Siswa</h3>
+<button onclick="window.print()">Print Barcode</button>
+<div class="container" id="qr-container"></div>
+
+<hr>
+
+<!-- ================= SCAN ABSENSI ================= -->
+<div id="scanSection">
+<h3>Scan Absensi</h3>
+<div id="reader"></div>
+</div>
+
+<hr>
+
+<!-- ================= REKAP BULANAN ================= -->
+<div id="rekapSection">
+<h3>Rekap Bulanan</h3>
+<input type="month" id="bulan">
+<button onclick="loadData()">Tampilkan</button>
+
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Nama</th>
+<th>Jumlah Hadir</th>
+</tr>
+</thead>
+<tbody id="rekap"></tbody>
+</table>
+</div>
+
+<script>
+
+const scriptURL = "YOUR_SCRIPT_URL";
+
+/* ================= DATA SISWA ================= */
+const siswa = [
+{id:"S001", nama:"Ahmad Fauzi"},
+{id:"S002", nama:"Muhammad Rizki"},
+{id:"S003", nama:"Abdul Rahman"},
+{id:"S004", nama:"Fajar Maulana"},
+{id:"S005", nama:"Dimas Pratama"},
+{id:"S006", nama:"Ilham Saputra"},
+{id:"S007", nama:"Naufal Hidayat"},
+{id:"S008", nama:"Aisyah Putri"},
+{id:"S009", nama:"Zahra Anindya"},
+{id:"S010", nama:"Siti Khadijah"},
+{id:"S011", nama:"Maryam Safitri"},
+{id:"S012", nama:"Fatimah Azzahra"},
+{id:"S013", nama:"Hasan Basri"},
+{id:"S014", nama:"Yusuf Ramadhan"},
+{id:"S015", nama:"Ali Akbar"}
+];
+
+/* ================= GENERATE QR ================= */
+const container = document.getElementById("qr-container");
+
+siswa.forEach(data => {
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const qrDiv = document.createElement("div");
+  card.appendChild(qrDiv);
+
+  new QRCode(qrDiv, {
+    text: data.id + "|" + data.nama,
+    width: 120,
+    height: 120
+  });
+
+  const nama = document.createElement("div");
+  nama.innerHTML = "<b>"+data.nama+"</b><br>"+data.id;
+  card.appendChild(nama);
+
+  container.appendChild(card);
+});
+
+/* ================= SCAN FUNCTION ================= */
+function onScanSuccess(decodedText) {
+  const data = decodedText.split("|");
+  const id = data[0];
+  const nama = data[1];
+
+  fetch(scriptURL, {
+    method: "POST",
+    body: JSON.stringify({
+      id: id,
+      nama: nama,
+      tanggal: new Date().toISOString().split("T")[0]
+    })
+  })
+  .then(res => res.json())
+  .then(() => alert("Presensi berhasil untuk "+nama));
+}
+
+new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 })
+  .render(onScanSuccess);
+
+/* ================= REKAP BULANAN ================= */
+function loadData(){
+  fetch(scriptURL)
+  .then(res=>res.json())
+  .then(data=>{
+    const bulan = document.getElementById("bulan").value;
+    const rekap = {};
+
+    data.forEach(row=>{
+      const id = row[1];
+      const nama = row[2];
+      const tanggal = row[3];
+
+      if(tanggal.startsWith(bulan)){
+        if(!rekap[id]){
+          rekap[id] = {nama:nama, jumlah:0};
+        }
+        rekap[id].jumlah++;
+      }
+    });
+
+    const tbody = document.getElementById("rekap");
+    tbody.innerHTML = "";
+
+    for(let id in rekap){
+      tbody.innerHTML += `
+        <tr>
+          <td>${id}</td>
+          <td>${rekap[id].nama}</td>
+          <td>${rekap[id].jumlah}</td>
+        </tr>
+      `;
+    }
+  });
+}
+
+</script>
+
+</body>
+</html>
