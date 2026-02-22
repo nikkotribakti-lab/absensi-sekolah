@@ -2,19 +2,15 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Dashboard Absensi Sekolah</title>
+<title>Dashboard Absensi Sekolah Profesional</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{
-  font-family:'Segoe UI',sans-serif;
-  background:#f4f7fb;
-}
+body{font-family:'Segoe UI',sans-serif;background:#f4f7fb}
 
 .header{
   background:#1e3c72;
@@ -45,15 +41,8 @@ body{
   box-shadow:0 5px 20px rgba(0,0,0,0.08);
 }
 
-.card h3{
-  font-size:14px;
-  color:#777;
-}
-
-.card h2{
-  margin-top:10px;
-  color:#1e3c72;
-}
+.card h3{font-size:14px;color:#777}
+.card h2{margin-top:10px;color:#1e3c72}
 
 .section{
   background:white;
@@ -71,33 +60,30 @@ button{
   border-radius:8px;
   cursor:pointer;
 }
-
 button:hover{background:#16325c}
 
 #reader{width:300px;margin:auto}
+
+.status{
+  text-align:center;
+  margin-top:15px;
+  font-weight:600;
+}
 
 table{
   width:100%;
   border-collapse:collapse;
   margin-top:20px;
 }
-
 th{
   background:#1e3c72;
   color:white;
   padding:10px;
 }
-
 td{
   padding:10px;
   border-bottom:1px solid #eee;
   text-align:center;
-}
-
-.status{
-  text-align:center;
-  margin-top:15px;
-  font-weight:600;
 }
 
 @media(max-width:768px){
@@ -108,7 +94,7 @@ td{
 <body>
 
 <div class="header">
-Dashboard Absensi Sekolah
+Dashboard Absensi Sekolah Profesional
 </div>
 
 <div class="container">
@@ -119,8 +105,8 @@ Dashboard Absensi Sekolah
 <h2 id="totalHadir">0</h2>
 </div>
 <div class="card">
-<h3>Total Siswa</h3>
-<h2>15</h2>
+<h3>Total Terlambat Bulan Ini</h3>
+<h2 id="totalTerlambat">0</h2>
 </div>
 </div>
 
@@ -137,6 +123,7 @@ Dashboard Absensi Sekolah
 
 <canvas id="chart" height="100"></canvas>
 
+<table>
 <thead>
 <tr>
 <th>ID</th>
@@ -146,6 +133,7 @@ Dashboard Absensi Sekolah
 </tr>
 </thead>
 <tbody id="rekap"></tbody>
+</table>
 </div>
 
 </div>
@@ -154,35 +142,16 @@ Dashboard Absensi Sekolah
 
 const scriptURL = "https://script.google.com/macros/s/AKfycbwDE1kzb5KZE_Rsahb1EcaaklJKGl9YClVtcJyPHtOF9OEvAYWzQtIyaAAGm3t73w8WoQ/exec";
 
-const siswa = [
-{id:"S001", nama:"Ahmad Fauzi"},
-{id:"S002", nama:"Muhammad Rizki"},
-{id:"S003", nama:"Abdul Rahman"},
-{id:"S004", nama:"Fajar Maulana"},
-{id:"S005", nama:"Dimas Pratama"},
-{id:"S006", nama:"Ilham Saputra"},
-{id:"S007", nama:"Naufal Hidayat"},
-{id:"S008", nama:"Aisyah Putri"},
-{id:"S009", nama:"Zahra Anindya"},
-{id:"S010", nama:"Siti Khadijah"},
-{id:"S011", nama:"Maryam Safitri"},
-{id:"S012", nama:"Fatimah Azzahra"},
-{id:"S013", nama:"Hasan Basri"},
-{id:"S014", nama:"Yusuf Ramadhan"},
-{id:"S015", nama:"Ali Akbar"}
-];
-
 let chartInstance;
 
 function onScanSuccess(decodedText){
-  const data=decodedText.split("|");
-  if(data.length<2){return;}
+  const data = decodedText.split("|");
+  if(data.length < 2){ return; }
 
   const now = new Date();
   const jam = now.toTimeString().split(" ")[0];
   const batas = "16:00:00";
-
-  let status = (jam > batas) ? "Terlambat" : "Hadir";
+  const status = (jam > batas) ? "Terlambat" : "Hadir";
 
   fetch(scriptURL,{
     method:"POST",
@@ -204,7 +173,8 @@ function onScanSuccess(decodedText){
         data[1]+" | "+jam+" | "+status;
     }
     loadData();
-  });
+  })
+  .catch(()=>alert("Gagal kirim data"));
 }
 
 new Html5QrcodeScanner("reader",{fps:10,qrbox:250})
@@ -215,48 +185,47 @@ function loadData(){
   .then(res=>res.json())
   .then(data=>{
     const bulan=document.getElementById("bulan").value;
-    const rekap={};
-    let total=0;
+    const tbody=document.getElementById("rekap");
+    tbody.innerHTML="";
+
+    let totalHadir=0;
+    let totalTerlambat=0;
 
     data.forEach(row=>{
       const id=row[1];
       const nama=row[2];
       const tanggal=row[3];
+      const jam=row[4];
+      const status=row[5];
+
       if(tanggal.startsWith(bulan)){
-        if(!rekap[id]){rekap[id]={nama:nama,jumlah:0};}
-        rekap[id].jumlah++;
-        total++;
+        if(status==="Hadir") totalHadir++;
+        if(status==="Terlambat") totalTerlambat++;
+
+        tbody.innerHTML+=`
+          <tr>
+            <td>${id}</td>
+            <td>${nama}</td>
+            <td>${jam}</td>
+            <td style="color:${status=="Terlambat"?"red":"green"}">
+              ${status}
+            </td>
+          </tr>
+        `;
       }
     });
 
-    document.getElementById("totalHadir").innerText=total;
-
-    const tbody=document.getElementById("rekap");
-    tbody.innerHTML="";
-    const labels=[];
-    const values=[];
-
-    for(let id in rekap){
-      tbody.innerHTML+=`
-        <tr>
-          <td>${id}</td>
-          <td>${rekap[id].nama}</td>
-          <td>${rekap[id].jumlah}</td>
-        </tr>
-      `;
-      labels.push(rekap[id].nama);
-      values.push(rekap[id].jumlah);
-    }
+    document.getElementById("totalHadir").innerText=totalHadir;
+    document.getElementById("totalTerlambat").innerText=totalTerlambat;
 
     if(chartInstance){chartInstance.destroy();}
     chartInstance=new Chart(document.getElementById("chart"),{
-      type:"bar",
+      type:"doughnut",
       data:{
-        labels:labels,
+        labels:["Hadir","Terlambat"],
         datasets:[{
-          label:"Jumlah Hadir",
-          data:values,
-          backgroundColor:"#1e3c72"
+          data:[totalHadir,totalTerlambat],
+          backgroundColor:["#2ecc71","#e74c3c"]
         }]
       }
     });
